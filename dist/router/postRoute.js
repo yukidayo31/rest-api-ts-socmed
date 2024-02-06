@@ -12,17 +12,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
 const express_1 = __importDefault(require("express"));
 const response_1 = __importDefault(require("../response"));
+const client_1 = require("@prisma/client");
 const library_1 = require("@prisma/client/runtime/library");
 const prisma = new client_1.PrismaClient();
 const router = express_1.default.Router();
+router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { title, content, authorId } = req.body;
+    const post = yield prisma.post.create({
+        data: {
+            title: title,
+            content: content,
+            authorId: parseInt(authorId),
+        },
+    });
+    if (post) {
+        (0, response_1.default)(201, post, `ADD new post, OK`, res);
+        console.log("Successfully ADD post data!");
+    }
+    else if (library_1.PrismaClientInitializationError) {
+        (0, response_1.default)(500, "Invalid data", "Server error", res);
+        console.log("SERVER ERROR");
+    }
+}));
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const users = yield prisma.user.findMany();
-    if (users) {
-        (0, response_1.default)(200, users, "GET all user list, success!", res);
-        console.log("GET all user list, OK!");
+    const post = yield prisma.post.findMany();
+    if (post) {
+        (0, response_1.default)(200, post, "GET all post list, success!", res);
+        console.log("GET all post list, OK!");
     }
     else if (library_1.PrismaClientInitializationError) {
         (0, response_1.default)(500, "Invalid data", "Server error", res);
@@ -30,14 +48,15 @@ router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 }));
 router.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield prisma.user.findUnique({
+    const id = req.params.id;
+    const post = yield prisma.post.findUnique({
         where: {
-            id: parseInt(req.params.id),
+            id: parseInt(id),
         },
     });
-    if (user) {
-        (0, response_1.default)(200, user, `GET user ${req.params.id} data, success!`, res);
-        console.log(`GET user ${req.params.id} data, OK!`);
+    if (post) {
+        (0, response_1.default)(200, post, `GET post ${id} data, success!`, res);
+        console.log(`GET post ${id} data, OK!`);
     }
     else if (library_1.PrismaClientValidationError) {
         (0, response_1.default)(404, "Invalid data", "Not Found", res);
@@ -45,39 +64,24 @@ router.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     }
 }));
 router.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const user = yield prisma.user.update({
+    const { title, content } = req.body;
+    const id = req.params.id;
+    const post = yield prisma.post.update({
         data: {
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password,
+            title: title,
+            content: content,
         },
         where: {
-            id: parseInt(req.params.id),
+            id: parseInt(id),
         },
     });
-    if (user) {
-        (0, response_1.default)(200, user, `UPDATE data user id = ${req.params.id}, OK!`, res);
-        console.log(`Successfully UPDATE data user with id = ${req.params.id}`);
+    if (post) {
+        (0, response_1.default)(200, post, `UPDATE post id = ${id}, OK!`, res);
+        console.log(`Successfully UPDATE post with id = ${id}`);
     }
     else if (library_1.PrismaClientInitializationError) {
         (0, response_1.default)(500, "Invalid data", "Server error", res);
         console.log("SERVER ERROR");
-    }
-}));
-router.get("/:authorId/posts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const authorId = req.params.authorId;
-    const post = yield prisma.post.findMany({
-        where: {
-            authorId: parseInt(authorId),
-        },
-    });
-    if (post) {
-        (0, response_1.default)(200, post, `GET user ${authorId} posts, success!`, res);
-        console.log(`GET user ${authorId} posts, OK!`);
-    }
-    else if (library_1.PrismaClientValidationError) {
-        (0, response_1.default)(404, "Invalid data", "Not Found", res);
-        console.log("CLIENT SIDE ERROR");
     }
 }));
 exports.default = router;
